@@ -1,6 +1,6 @@
-# 🚀 AI Project Advisor | مستشار المشاريع الذكي
-
 # Baseera | بصيرة
+
+# 🚀 AI Project Advisor | مستشار المشاريع الذكي
 
 # Baseera = An Arabic word meaning "deep vision and accurate understanding". | بصيرة = كلمة عربية تعني الرؤية العميقة والفهم الدقيق
 

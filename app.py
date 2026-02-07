@@ -9,7 +9,7 @@ import os
 from groq import Groq
 
 # إعداد المفتاح
-api_key = os.getenv("GROQ_API_KEY", "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")
+api_key = os.getenv("GROQ_API_KEY")
 client = Groq(api_key=api_key)
 
 app = FastAPI()
@@ -75,3 +75,4 @@ async def chat(msg: ChatMessage):
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
+

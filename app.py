@@ -7,9 +7,17 @@ from pypdf import PdfReader
 import io
 import os
 from groq import Groq
+from dotenv import load_dotenv  # 1. استدعاء مكتبة قراءة ملف .env
+
+# 2. تحميل المتغيرات من ملف .env (هذا السطر يحل مشكلة المفتاح محلياً)
+load_dotenv()
 
 # إعداد المفتاح
 api_key = os.getenv("GROQ_API_KEY")
+if not api_key:
+    # طباعة تنبيه إذا لم يجد المفتاح
+    print("⚠️ تنبيه: لم يتم العثور على مفتاح API. تأكد من ملف .env أو إعدادات السيرفر.")
+
 client = Groq(api_key=api_key)
 
 app = FastAPI()
@@ -24,13 +32,16 @@ app.add_middleware(
 
 project_context = {"text": ""}
 
-# --- التعديل هنا: قراءة ملف index.html ---
+# --- 3. هنا التغيير: قراءة ملف index.html الخارجي ---
 @app.get("/", response_class=HTMLResponse)
-def get_ui():
-    with open("index.html", "r", encoding="utf-8") as f:
-        return f.read()
+async def get_ui():
+    # نتأكد أن الملف موجود قبل قراءته
+    if os.path.exists("index.html"):
+        with open("index.html", "r", encoding="utf-8") as f:
+            return f.read()
+    else:
+        return "<h1>خطأ: ملف index.html غير موجود!</h1>"
 
-# --- باقي الكود كما هو ---
 @app.post("/upload")
 async def upload_document(file: UploadFile = File(...)):
     try:
@@ -71,8 +82,9 @@ async def chat(msg: ChatMessage):
         )
         return {"reply": chat_completion.choices[0].message.content}
     except Exception as e:
+        # طباعة الخطأ في التيرمينال أيضاً للمساعدة في الحل
+        print(f"Error: {str(e)}")
         return {"reply": f"خطأ: {str(e)}"}
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
-

@@ -1,22 +1,23 @@
-<!DOCTYPE html>
-<html dir="rtl" lang="ar">
-<head>
+<html dir="rtl" lang="ar"><head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>بصيرة | Baseera</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <title>Baseera</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&amp;display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
+    
     <style>
         :root {
             --primary-color: #0084ff;
             --bg-color: #f0f2f5;
-            --sidebar-width: 650px; /* العرض الافتراضي */
-            --sidebar-collapsed-width: 300px;
+            --chat-bg: #ffffff;
+            --user-msg-bg: #0084ff;
+            --bot-msg-bg: #e4e6eb;
+            --text-color: #050505;
+            --sidebar-width: 280px;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
-
+        
         body {
             font-family: 'Cairo', sans-serif;
             background-color: var(--bg-color);
@@ -30,49 +31,13 @@
             width: var(--sidebar-width);
             background: white;
             border-left: 1px solid #ddd;
+            padding: 20px;
             display: flex;
             flex-direction: column;
             gap: 20px;
-            padding: 20px;
-            transition: width 0.3s ease;
-            position: relative;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.05);
             z-index: 100;
         }
-
-        .sidebar.collapsed {
-            width: var(--sidebar-collapsed-width);
-            padding: 20px 10px;
-        }
-
-        .sidebar.collapsed .logo h1,
-        .sidebar.collapsed .upload-text,
-        .sidebar.collapsed .footer-text {
-            display: none;
-        }
-
-        .sidebar.collapsed .btn-toggle i {
-            transform: rotate(180deg);
-        }
-
-        /* زر تصغير القائمة */
-        .btn-toggle {
-            position: absolute;
-            left: -15px;
-            top: 50%;
-            background: white;
-            border: 1px solid #ddd;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            color: #555;
-            transition: 0.3s;
-        }
-        .btn-toggle:hover { color: var(--primary-color); }
 
         .logo {
             font-size: 22px;
@@ -81,8 +46,6 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            white-space: nowrap;
-            overflow: hidden;
         }
 
         .upload-section {
@@ -95,29 +58,29 @@
             background: #fafafa;
         }
 
-        .upload-section:hover { border-color: var(--primary-color); background: #eef7ff; }
-
-        /* منطقة معاينة PDF */
-        #pdf-preview-container {
-            flex: 10;
-            border: 9px solid #eee;
-            border-radius: 8px;
-            overflow: hidden;
-            display: none; /* مخفي افتراضياً */
-            background: #f9f9f9;
+        .upload-section:hover {
+            border-color: var(--primary-color);
+            background: #eef7ff;
         }
 
-        iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
+        .upload-icon {
+            font-size: 30px;
+            color: #777;
+            margin-bottom: 10px;
         }
 
-        /* --- الشات --- */
+        #file-status {
+            font-size: 13px;
+            margin-top: 10px;
+            color: #666;
+        }
+
+        /* --- منطقة المحادثة --- */
         .main-chat {
             flex: 1;
             display: flex;
             flex-direction: column;
+            background: var(--bg-color);
             position: relative;
         }
 
@@ -126,9 +89,13 @@
             background: white;
             border-bottom: 1px solid #ddd;
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            justify-content: space-between;
         }
+
+        .chat-title h2 { font-size: 18px; color: #333; }
+        .chat-title span { font-size: 12px; color: green; display: flex; align-items: center; gap: 5px; }
+        .status-dot { width: 8px; height: 8px; background: green; border-radius: 50%; }
 
         .messages-container {
             flex: 1;
@@ -143,151 +110,202 @@
             max-width: 75%;
             padding: 12px 18px;
             border-radius: 18px;
+            font-size: 15px;
             line-height: 1.6;
+            position: relative;
             word-wrap: break-word;
+            animation: fadeIn 0.3s ease;
         }
-        .bot { background: #e4e6eb; color: #050505; align-self: flex-end; border-bottom-right-radius: 4px; }
-        .user { background: var(--primary-color); color: white; align-self: flex-start; border-bottom-left-radius: 4px; }
 
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .message.bot {
+            background: var(--bot-msg-bg);
+            color: var(--text-color);
+            align-self: flex-end; /* البوت يمين للعربي */
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.user {
+            background: var(--user-msg-bg);
+            color: white;
+            align-self: flex-start; /* المستخدم يسار للعربي */
+            border-bottom-left-radius: 4px;
+        }
+
+        /* --- منطقة الكتابة --- */
         .input-area {
             background: white;
-            padding: 15px;
-            border-top: 1px solid #ddd;
+            padding: 15px 20px;
             display: flex;
+            align-items: center;
             gap: 10px;
+            border-top: 1px solid #ddd;
+        }
+
+        .input-wrapper {
+            flex: 1;
+            position: relative;
         }
 
         input[type="text"] {
-            flex: 1;
-            padding: 12px;
+            width: 100%;
+            padding: 12px 45px 12px 15px;
             border: 1px solid #ddd;
             border-radius: 25px;
+            font-family: 'Cairo', sans-serif;
+            font-size: 15px;
             outline: none;
+            transition: 0.3s;
+            background: #f9f9f9;
         }
 
-        button {
-            padding: 10px 20px;
+        input[type="text"]:focus {
+            background: white;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(0, 132, 255, 0.1);
+        }
+
+        .send-btn {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
             background: var(--primary-color);
             color: white;
             border: none;
-            border-radius: 25px;
             cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+            font-size: 18px;
         }
-        button:disabled { background: #ccc; }
 
-        /* للجوال */
+        .send-btn:hover { background: #0073e6; transform: scale(1.05); }
+        .send-btn:disabled { background: #ccc; cursor: not-allowed; transform: none; }
+
+        /* أيقونة التحميل */
+        .typing-indicator {
+            display: flex;
+            gap: 5px;
+            padding: 10px 15px;
+            background: var(--bot-msg-bg);
+            border-radius: 15px;
+            width: fit-content;
+            align-self: flex-end;
+            margin-bottom: 10px;
+        }
+        .dot {
+            width: 8px; height: 8px; background: #999; border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+        .dot:nth-child(1) { animation-delay: -0.32s; }
+        .dot:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+
+        /* تجاوب للجوال */
         @media (max-width: 768px) {
-            .sidebar { position: absolute; height: 100%; transform: translateX(100%); right: 0; }
-            .sidebar.active { transform: translateX(0); }
-            .btn-toggle { display: none; } /* إخفاء زر التصغير في الجوال */
+            body { flex-direction: column; }
+            .sidebar { width: 100%; height: auto; padding: 10px; flex-direction: row; align-items: center; justify-content: space-between; border-left: none; border-bottom: 1px solid #ddd; }
+            .upload-section { padding: 5px 10px; display: flex; align-items: center; gap: 5px; width: auto; }
+            .upload-icon { font-size: 18px; margin: 0; }
+            .logo h1 { font-size: 18px; }
+            .logo i { font-size: 18px; }
+            #file-status { display: none; }
+            .main-chat { height: calc(100vh - 70px); }
         }
     </style>
 </head>
 <body>
 
-    <div class="sidebar" id="sidebar">
-        <div class="btn-toggle" onclick="toggleSidebar()">
-            <i class="fas fa-chevron-right"></i>
-        </div>
-
+    <div class="sidebar">
         <div class="logo">
-
-            <img src="https://lh3.googleusercontent.com/gg/AMW1TPp_vLcH88IBq77n9qj_bWdLPvFO5r5S17nysl5Cva15uSjNEuSpJF13J6XX7UKxpZHRWZsPE5dRRj7qC50DzkKbABpK_TjVV8dt_-8uA_dBNpgm8E2_ZANE8L_OO84rDTGsEX4frB-j23Z4Ej6M6EJA0czHcvJjOlvHP4w20HpVFkp1AGdz=s1024-rj-mp2"
-            alt="Logo" style="width:300px; height:130px; border-radius:50%;">
-
+            <i class="fas fa-robot"></i>
+            <h1>مستشار المشاريع</h1>
         </div>
-
-        <div class="upload-section" onclick="document.getElementById('fileInput').click()" title="رفع ملف">
-            <i class="fas fa-cloud-upload-alt fa-2x" style="color: #008a05;"></i>
-            <div class="upload-text">
-                <p style="font-weight:bold; margin-top:5px;">رفع ملف PDF</p>
-                <p id="file-status" style="font-size:12px; color:#008a05;">اضغط للاختيار</p>
+        
+        <div class="upload-section" onclick="document.getElementById('fileInput').click()">
+            <i class="fas fa-cloud-upload-alt upload-icon"></i>
+            <div>
+                <strong>رفع ملف PDF</strong>
+                <p id="file-status">اضغط هنا لاختيار الملف</p>
             </div>
-            <input type="file" id="fileInput" style="display:none" onchange="handleFileUpload()">
-        </div>
-
-        <div id="pdf-preview-container">
-            <iframe id="pdf-frame"></iframe>
+            <input type="file" id="fileInput" style="display:none" onchange="uploadFile()">
         </div>
 
         <div style="flex: 1;"></div>
-        <div class="footer-text" style="text-align: center; font-size: 12px; color: #999;">
-            Powered by Llama 3.3
+        <div style="font-size: 12px; color: #888; text-align: center;">
+            Powered by Llama 3.3 🚀
         </div>
     </div>
 
     <div class="main-chat">
         <div class="chat-header">
-            <h3>المحادثة الخاصة</h3>
-            <button onclick="location.reload()" style="background:none; color:#525750; padding:0;">
+            <div class="chat-title">
+                <h2>المساعد الذكي</h2>
+                <span><div class="status-dot"></div> متصل الآن</span>
+            </div>
+            <div style="color: #888; cursor: pointer;" onclick="location.reload()">
                 <i class="fas fa-redo-alt"></i>
-            </button>
+            </div>
         </div>
 
         <div id="chatBox" class="messages-container">
             <div class="message bot">
-                مرحباً! 👋 ارفع ملف المشروع (PDF) وسأعرض لك معاينة له هنا، ثم اسألني عن أي تفاصيل داخله.
+                <i class="fas fa-robot" style="margin-left:5px; color: #555;"></i>
+                مرحباً بك! 👋 <br>
+                أنا جاهز لتحليل مشاريعك. يرجى رفع ملف الـ PDF من القائمة الجانبية للبدء.
             </div>
         </div>
 
         <div class="input-area">
-            <input type="text" id="userMsg" placeholder="اكتب سؤالك..." disabled onkeypress="if(event.key==='Enter') sendMessage()">
-            <button id="sendBtn" onclick="sendMessage()" disabled>
+            <div class="input-wrapper">
+                <input type="text" id="userMsg" placeholder="اكتب سؤالك هنا..." disabled="" onkeypress="if(event.key==='Enter') sendMessage()">
+            </div>
+            <button id="sendBtn" class="send-btn" onclick="sendMessage()" disabled="">
                 <i class="fas fa-paper-plane"></i>
             </button>
         </div>
     </div>
 
     <script>
-        // 1. التحكم في القائمة الجانبية
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('collapsed');
-        }
-
-        // 2. معالجة رفع الملف والمعاينة
-        async function handleFileUpload() {
+        async function uploadFile() {
             const fileInput = document.getElementById('fileInput');
             const statusText = document.getElementById('file-status');
-            const previewContainer = document.getElementById('pdf-preview-container');
-            const pdfFrame = document.getElementById('pdf-frame');
+            const uploadBox = document.querySelector('.upload-section');
 
-            const file = fileInput.files[0];
-            if (!file) return;
+            if (!fileInput.files[0]) return;
 
-            // أ: عرض المعاينة فوراً (Client-Side)
-            const fileURL = URL.createObjectURL(file);
-            pdfFrame.src = fileURL;
-            previewContainer.style.display = 'block';
-
-            // ب: إرسال الملف للسيرفر (Backend)
             const formData = new FormData();
-            formData.append("file", file);
-
+            formData.append("file", fileInput.files[0]);
+            
             statusText.textContent = "جاري التحليل...";
             statusText.style.color = "#0084ff";
-
+            
             try {
                 const res = await fetch("/upload", { method: "POST", body: formData });
                 const data = await res.json();
-
+                
                 if (res.ok) {
-                    statusText.innerHTML = "✅ تم التحليل";
+                    statusText.innerHTML = "✅ تم التحليل بنجاح";
                     statusText.style.color = "green";
+                    uploadBox.style.borderColor = "green";
+                    uploadBox.style.background = "#e8f5e9";
+                    
                     document.getElementById('userMsg').disabled = false;
                     document.getElementById('sendBtn').disabled = false;
-
-                    addMessage("bot", "✅ استلمت الملف وهو ظاهر أمامك في المعاينة. اسألني الآن!");
+                    
+                    addMessage("bot", "✅ تم استلام الملف! يمكنك الآن سؤالي عن الميزانية، الجدول الزمني، أو أي تفاصيل أخرى.");
                 } else {
-                    statusText.textContent = "❌ خطأ";
+                    statusText.textContent = "❌ خطأ في الملف";
                     statusText.style.color = "red";
                 }
             } catch (e) {
                 statusText.textContent = "❌ فشل الاتصال";
+                statusText.style.color = "red";
             }
         }
 
-        // 3. إرسال الرسائل
         async function sendMessage() {
             const input = document.getElementById('userMsg');
             const text = input.value.trim();
@@ -295,12 +313,9 @@
 
             addMessage("user", text);
             input.value = "";
-
-            // مؤشر كتابة بسيط
-            const loadingId = "loading-" + Date.now();
-            const chatBox = document.getElementById('chatBox');
-            chatBox.innerHTML += `<div id="${loadingId}" class="message bot">...</div>`;
-            chatBox.scrollTop = chatBox.scrollHeight;
+            
+            // إظهار مؤشر الكتابة
+            const loadingId = showTypingIndicator();
 
             try {
                 const res = await fetch("/chat", {
@@ -309,12 +324,16 @@
                     body: JSON.stringify({ message: text })
                 });
                 const data = await res.json();
-
-                document.getElementById(loadingId).remove();
-                addMessage("bot", data.reply.replace(/\\n/g, "<br>"));
-
+                
+                removeTypingIndicator(loadingId);
+                
+                // تحويل فواصل الأسطر إلى HTML
+                const formattedReply = data.reply.replace(/\\n/g, "<br>");
+                addMessage("bot", formattedReply);
+                
             } catch (e) {
-                document.getElementById(loadingId).innerText = "❌ خطأ";
+                removeTypingIndicator(loadingId);
+                addMessage("bot", "❌ حدث خطأ في الاتصال، حاول مرة أخرى.");
             }
         }
 
@@ -326,6 +345,24 @@
             chatBox.appendChild(div);
             chatBox.scrollTop = chatBox.scrollHeight;
         }
+
+        function showTypingIndicator() {
+            const chatBox = document.getElementById('chatBox');
+            const id = "loading-" + Date.now();
+            const div = document.createElement('div');
+            div.id = id;
+            div.className = "typing-indicator";
+            div.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+            chatBox.appendChild(div);
+            chatBox.scrollTop = chatBox.scrollHeight;
+            return id;
+        }
+
+        function removeTypingIndicator(id) {
+            const element = document.getElementById(id);
+            if (element) element.remove();
+        }
     </script>
-</body>
-</html>
+
+
+</body></html>

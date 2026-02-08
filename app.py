@@ -7,17 +7,12 @@ from pypdf import PdfReader
 import io
 import os
 from groq import Groq
-from dotenv import load_dotenv  # 1. استدعاء مكتبة قراءة ملف .env
+from dotenv import load_dotenv
 
-# 2. تحميل المتغيرات من ملف .env (هذا السطر يحل مشكلة المفتاح محلياً)
 load_dotenv()
 
 # إعداد المفتاح
 api_key = os.getenv("GROQ_API_KEY")
-if not api_key:
-    # طباعة تنبيه إذا لم يجد المفتاح
-    print("⚠️ تنبيه: لم يتم العثور على مفتاح API. تأكد من ملف .env أو إعدادات السيرفر.")
-
 client = Groq(api_key=api_key)
 
 app = FastAPI()
@@ -30,23 +25,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-project_context = {"text": ""}
+# ❌ حذفنا المتغير global project_context لأنه ما ينفع مع Vercel
 
-# --- 3. هنا التغيير: قراءة ملف index.html الخارجي ---
 @app.get("/", response_class=HTMLResponse)
 async def get_ui():
-    # نتأكد أن الملف موجود قبل قراءته
     if os.path.exists("index.html"):
         with open("index.html", "r", encoding="utf-8") as f:
             return f.read()
-    else:
-        return "<h1>خطأ: ملف index.html غير موجود!</h1>"
+    return "Error: index.html not found"
 
 @app.post("/upload")
 async def upload_document(file: UploadFile = File(...)):
     try:
-        if not file.filename.endswith('.pdf'):
-            return {"message": "يرجى رفع ملف PDF فقط!"}
         content = await file.read()
         pdf_reader = PdfReader(io.BytesIO(content))
         text = ""
@@ -54,26 +44,28 @@ async def upload_document(file: UploadFile = File(...)):
             extracted = page.extract_text()
             if extracted: text += extracted + "\n"
         
-        if not text.strip(): return {"message": "الملف فارغ!"}
-        project_context["text"] = text
-        return {"message": "تم التحليل بنجاح"}
+        # ✅ التغيير هنا: نرسل النص المستخرج للمتصفح
+        return {"message": "تم التحليل بنجاح", "extracted_text": text}
     except Exception as e:
         return {"message": f"خطأ: {str(e)}"}
 
+# ✅ التغيير هنا: نطلب من المتصفح يرسل النص مع السؤال
 class ChatMessage(BaseModel):
     message: str
+    context: str = ""  # النص يجينا من المتصفح
 
 @app.post("/chat")
 async def chat(msg: ChatMessage):
-    if not project_context["text"]:
-        return {"reply": "⚠️ يرجى رفع ملف PDF أولاً من القائمة الجانبية."}
+    # نستخدم النص اللي وصلنا في الطلب
+    if not msg.context:
+        return {"reply": "⚠️ يرجى رفع ملف PDF أولاً."}
     
     try:
         chat_completion = client.chat.completions.create(
             messages=[
                 {
                     "role": "system",
-                    "content": f"أنت مساعد ذكي. أجب بناءً على النص:\n{project_context['text'][:25000]}"
+                    "content": f"أنت مساعد ذكي. أجب بناءً على النص التالي:\n{msg.context[:25000]}"
                 },
                 { "role": "user", "content": msg.message }
             ],
@@ -82,8 +74,6 @@ async def chat(msg: ChatMessage):
         )
         return {"reply": chat_completion.choices[0].message.content}
     except Exception as e:
-        # طباعة الخطأ في التيرمينال أيضاً للمساعدة في الحل
-        print(f"Error: {str(e)}")
         return {"reply": f"خطأ: {str(e)}"}
 
 if __name__ == "__main__":

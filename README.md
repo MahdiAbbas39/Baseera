@@ -4,7 +4,7 @@
 
 # Baseera = An Arabic word meaning "deep vision and accurate understanding". | بصيرة = كلمة عربية تعني الرؤية العميقة والفهم الدقيق
 
-### 🔗 Live Demo: [https://llama3-3-1.vercel.app](https://llama3-3-1.vercel.app/)
+### 🔗 Live Demo: [https://baseera-v2.vercel.app/](https://baseera-v2.vercel.app/)
 
 ## 🌟 Overview (نبذة عن المشروع)
 **AI Project Advisor** is an advanced RAG (Retrieval-Augmented Generation) system powered by the **Llama 3.3** model. It allows users to upload project documentation (PDFs) and receive instant, context-aware answers regarding budgets, timelines, and technical requirements.

@@ -1,368 +1,143 @@
-<html dir="rtl" lang="ar"><head>
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Baseera</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&amp;display=swap" rel="stylesheet">
+    <title>بصيرة | Baseera</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
     <style>
-        :root {
-            --primary-color: #0084ff;
-            --bg-color: #f0f2f5;
-            --chat-bg: #ffffff;
-            --user-msg-bg: #0084ff;
-            --bot-msg-bg: #e4e6eb;
-            --text-color: #050505;
-            --sidebar-width: 280px;
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root { --primary: #0084ff; --bg: #f4f7f6; }
+        body { font-family: 'Cairo', sans-serif; background: var(--bg); margin: 0; height: 100vh; display: flex; overflow: hidden; }
         
-        body {
-            font-family: 'Cairo', sans-serif;
-            background-color: var(--bg-color);
-            height: 100vh;
-            display: flex;
-            overflow: hidden;
+        /* القائمة الجانبية */
+        .sidebar { width: 350px; background: white; padding: 20px; border-left: 1px solid #ddd; display: flex; flex-direction: column; gap: 20px; transition: 0.3s; }
+        .logo { font-size: 24px; font-weight: bold; color: var(--primary); text-align: center; margin-bottom: 10px; }
+        
+        .upload-box { 
+            border: 2px dashed #ccc; padding: 30px; text-align: center; 
+            border-radius: 10px; cursor: pointer; transition: 0.3s; background: #fafafa;
         }
+        .upload-box:hover { border-color: var(--primary); background: #eef7ff; }
+        
+        /* معاينة PDF */
+        #pdf-preview { flex: 1; border: 1px solid #eee; border-radius: 8px; display: none; background: #333; }
+        iframe { width: 100%; height: 100%; border: none; }
 
-        /* --- القائمة الجانبية --- */
-        .sidebar {
-            width: var(--sidebar-width);
-            background: white;
-            border-left: 1px solid #ddd;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            box-shadow: 2px 0 5px rgba(0,0,0,0.05);
-            z-index: 100;
-        }
+        /* الشات */
+        .main-chat { flex: 1; display: flex; flex-direction: column; background: #fff; }
+        .chat-container { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
+        .message { max-width: 80%; padding: 12px 18px; border-radius: 15px; line-height: 1.6; }
+        .bot { background: #f0f2f5; color: black; align-self: flex-end; border-bottom-right-radius: 2px; }
+        .user { background: var(--primary); color: white; align-self: flex-start; border-bottom-left-radius: 2px; }
+        
+        .input-area { padding: 20px; border-top: 1px solid #ddd; display: flex; gap: 10px; }
+        input { flex: 1; padding: 15px; border: 1px solid #ddd; border-radius: 30px; outline: none; }
+        button { padding: 10px 25px; background: var(--primary); color: white; border: none; border-radius: 30px; cursor: pointer; }
+        button:disabled { background: #ccc; }
 
-        .logo {
-            font-size: 22px;
-            font-weight: 700;
-            color: var(--primary-color);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .upload-section {
-            border: 2px dashed #ccc;
-            border-radius: 12px;
-            padding: 20px;
-            text-align: center;
-            cursor: pointer;
-            transition: 0.3s;
-            background: #fafafa;
-        }
-
-        .upload-section:hover {
-            border-color: var(--primary-color);
-            background: #eef7ff;
-        }
-
-        .upload-icon {
-            font-size: 30px;
-            color: #777;
-            margin-bottom: 10px;
-        }
-
-        #file-status {
-            font-size: 13px;
-            margin-top: 10px;
-            color: #666;
-        }
-
-        /* --- منطقة المحادثة --- */
-        .main-chat {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            background: var(--bg-color);
-            position: relative;
-        }
-
-        .chat-header {
-            padding: 15px 20px;
-            background: white;
-            border-bottom: 1px solid #ddd;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .chat-title h2 { font-size: 18px; color: #333; }
-        .chat-title span { font-size: 12px; color: green; display: flex; align-items: center; gap: 5px; }
-        .status-dot { width: 8px; height: 8px; background: green; border-radius: 50%; }
-
-        .messages-container {
-            flex: 1;
-            padding: 20px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .message {
-            max-width: 75%;
-            padding: 12px 18px;
-            border-radius: 18px;
-            font-size: 15px;
-            line-height: 1.6;
-            position: relative;
-            word-wrap: break-word;
-            animation: fadeIn 0.3s ease;
-        }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        .message.bot {
-            background: var(--bot-msg-bg);
-            color: var(--text-color);
-            align-self: flex-end; /* البوت يمين للعربي */
-            border-bottom-right-radius: 4px;
-        }
-
-        .message.user {
-            background: var(--user-msg-bg);
-            color: white;
-            align-self: flex-start; /* المستخدم يسار للعربي */
-            border-bottom-left-radius: 4px;
-        }
-
-        /* --- منطقة الكتابة --- */
-        .input-area {
-            background: white;
-            padding: 15px 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            border-top: 1px solid #ddd;
-        }
-
-        .input-wrapper {
-            flex: 1;
-            position: relative;
-        }
-
-        input[type="text"] {
-            width: 100%;
-            padding: 12px 45px 12px 15px;
-            border: 1px solid #ddd;
-            border-radius: 25px;
-            font-family: 'Cairo', sans-serif;
-            font-size: 15px;
-            outline: none;
-            transition: 0.3s;
-            background: #f9f9f9;
-        }
-
-        input[type="text"]:focus {
-            background: white;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(0, 132, 255, 0.1);
-        }
-
-        .send-btn {
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: 0.2s;
-            font-size: 18px;
-        }
-
-        .send-btn:hover { background: #0073e6; transform: scale(1.05); }
-        .send-btn:disabled { background: #ccc; cursor: not-allowed; transform: none; }
-
-        /* أيقونة التحميل */
-        .typing-indicator {
-            display: flex;
-            gap: 5px;
-            padding: 10px 15px;
-            background: var(--bot-msg-bg);
-            border-radius: 15px;
-            width: fit-content;
-            align-self: flex-end;
-            margin-bottom: 10px;
-        }
-        .dot {
-            width: 8px; height: 8px; background: #999; border-radius: 50%;
-            animation: bounce 1.4s infinite ease-in-out both;
-        }
-        .dot:nth-child(1) { animation-delay: -0.32s; }
-        .dot:nth-child(2) { animation-delay: -0.16s; }
-        @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
-
-        /* تجاوب للجوال */
-        @media (max-width: 768px) {
-            body { flex-direction: column; }
-            .sidebar { width: 100%; height: auto; padding: 10px; flex-direction: row; align-items: center; justify-content: space-between; border-left: none; border-bottom: 1px solid #ddd; }
-            .upload-section { padding: 5px 10px; display: flex; align-items: center; gap: 5px; width: auto; }
-            .upload-icon { font-size: 18px; margin: 0; }
-            .logo h1 { font-size: 18px; }
-            .logo i { font-size: 18px; }
-            #file-status { display: none; }
-            .main-chat { height: calc(100vh - 70px); }
-        }
+        @media (max-width: 768px) { body { flex-direction: column; } .sidebar { width: 100%; height: 200px; } }
     </style>
 </head>
 <body>
 
-    <div class="sidebar">
-        <div class="logo">
-            <i class="fas fa-robot"></i>
-            <h1>مستشار المشاريع</h1>
-        </div>
+    <div class="sidebar" id="sidebar">
+        <div class="logo"><i class="fas fa-eye"></i> بصيرة</div>
         
-        <div class="upload-section" onclick="document.getElementById('fileInput').click()">
-            <i class="fas fa-cloud-upload-alt upload-icon"></i>
-            <div>
-                <strong>رفع ملف PDF</strong>
-                <p id="file-status">اضغط هنا لاختيار الملف</p>
-            </div>
-            <input type="file" id="fileInput" style="display:none" onchange="uploadFile()">
+        <div class="upload-box" onclick="document.getElementById('fileInput').click()">
+            <i class="fas fa-cloud-upload-alt fa-2x" style="color: #777;"></i>
+            <p id="status" style="margin-top: 10px; font-size: 14px; color: #666;">اضغط لرفع ملف PDF</p>
+            <input type="file" id="fileInput" hidden accept=".pdf" onchange="uploadFile()">
         </div>
 
-        <div style="flex: 1;"></div>
-        <div style="font-size: 12px; color: #888; text-align: center;">
-            Powered by Llama 3.3 🚀
+        <div id="pdf-preview">
+            <iframe id="pdf-frame"></iframe>
         </div>
     </div>
 
     <div class="main-chat">
-        <div class="chat-header">
-            <div class="chat-title">
-                <h2>المساعد الذكي</h2>
-                <span><div class="status-dot"></div> متصل الآن</span>
-            </div>
-            <div style="color: #888; cursor: pointer;" onclick="location.reload()">
-                <i class="fas fa-redo-alt"></i>
-            </div>
+        <div class="chat-container" id="chatBox">
+            <div class="message bot">مرحباً! 👋 ارفع ملف المشروع وسأقوم بتحليله لتسألني عنه.</div>
         </div>
-
-        <div id="chatBox" class="messages-container">
-            <div class="message bot">
-                <i class="fas fa-robot" style="margin-left:5px; color: #555;"></i>
-                مرحباً بك! 👋 <br>
-                أنا جاهز لتحليل مشاريعك. يرجى رفع ملف الـ PDF من القائمة الجانبية للبدء.
-            </div>
-        </div>
-
         <div class="input-area">
-            <div class="input-wrapper">
-                <input type="text" id="userMsg" placeholder="اكتب سؤالك هنا..." disabled="" onkeypress="if(event.key==='Enter') sendMessage()">
-            </div>
-            <button id="sendBtn" class="send-btn" onclick="sendMessage()" disabled="">
-                <i class="fas fa-paper-plane"></i>
-            </button>
+            <input type="text" id="msgInput" placeholder="اكتب سؤالك..." onkeypress="if(event.key==='Enter') send()">
+            <button onclick="send()" id="sendBtn"><i class="fas fa-paper-plane"></i></button>
         </div>
     </div>
 
     <script>
+        let projectContext = ""; // هنا يُحفظ النص في المتصفح
+
         async function uploadFile() {
             const fileInput = document.getElementById('fileInput');
-            const statusText = document.getElementById('file-status');
-            const uploadBox = document.querySelector('.upload-section');
+            const status = document.getElementById('status');
+            const file = fileInput.files[0];
+            if (!file) return;
 
-            if (!fileInput.files[0]) return;
+            // معاينة الملف
+            const url = URL.createObjectURL(file);
+            document.getElementById('pdf-frame').src = url;
+            document.getElementById('pdf-preview').style.display = 'block';
 
+            // إرسال للسيرفر
             const formData = new FormData();
-            formData.append("file", fileInput.files[0]);
-            
-            statusText.textContent = "جاري التحليل...";
-            statusText.style.color = "#0084ff";
-            
+            formData.append("file", file);
+            status.innerText = "جاري التحليل...";
+
             try {
                 const res = await fetch("/upload", { method: "POST", body: formData });
                 const data = await res.json();
                 
-                if (res.ok) {
-                    statusText.innerHTML = "✅ تم التحليل بنجاح";
-                    statusText.style.color = "green";
-                    uploadBox.style.borderColor = "green";
-                    uploadBox.style.background = "#e8f5e9";
-                    
-                    document.getElementById('userMsg').disabled = false;
-                    document.getElementById('sendBtn').disabled = false;
-                    
-                    addMessage("bot", "✅ تم استلام الملف! يمكنك الآن سؤالي عن الميزانية، الجدول الزمني، أو أي تفاصيل أخرى.");
+                if (data.text) {
+                    projectContext = data.text; // ✅ حفظ النص القادم من السيرفر
+                    status.innerText = "✅ تم التحليل بنجاح";
+                    status.style.color = "green";
+                    addMsg("bot", "✅ استلمت الملف! يمكنك الآن سؤالي عن التفاصيل.");
                 } else {
-                    statusText.textContent = "❌ خطأ في الملف";
-                    statusText.style.color = "red";
+                    status.innerText = "❌ فشل استخراج النص";
                 }
-            } catch (e) {
-                statusText.textContent = "❌ فشل الاتصال";
-                statusText.style.color = "red";
-            }
+            } catch (e) { status.innerText = "❌ خطأ في الاتصال"; }
         }
 
-        async function sendMessage() {
-            const input = document.getElementById('userMsg');
+        async function send() {
+            const input = document.getElementById('msgInput');
             const text = input.value.trim();
             if (!text) return;
-
-            addMessage("user", text);
-            input.value = "";
             
-            // إظهار مؤشر الكتابة
-            const loadingId = showTypingIndicator();
+            if (!projectContext) {
+                alert("⚠️ يرجى رفع ملف PDF أولاً!");
+                return;
+            }
+
+            addMsg("user", text);
+            input.value = "";
+            addMsg("bot", "...");
 
             try {
+                // نرسل النص المحفوظ مع السؤال
                 const res = await fetch("/chat", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ message: text })
+                    body: JSON.stringify({ message: text, context: projectContext }) 
                 });
                 const data = await res.json();
                 
-                removeTypingIndicator(loadingId);
-                
-                // تحويل فواصل الأسطر إلى HTML
-                const formattedReply = data.reply.replace(/\\n/g, "<br>");
-                addMessage("bot", formattedReply);
-                
+                // تعديل رسالة الانتظار بالرد
+                const msgs = document.getElementsByClassName("bot");
+                msgs[msgs.length - 1].innerHTML = data.reply.replace(/\n/g, "<br>");
             } catch (e) {
-                removeTypingIndicator(loadingId);
-                addMessage("bot", "❌ حدث خطأ في الاتصال، حاول مرة أخرى.");
+                const msgs = document.getElementsByClassName("bot");
+                msgs[msgs.length - 1].innerText = "❌ خطأ";
             }
         }
 
-        function addMessage(sender, text) {
-            const chatBox = document.getElementById('chatBox');
-            const div = document.createElement('div');
-            div.className = `message ${sender}`;
-            div.innerHTML = text;
-            chatBox.appendChild(div);
-            chatBox.scrollTop = chatBox.scrollHeight;
-        }
-
-        function showTypingIndicator() {
-            const chatBox = document.getElementById('chatBox');
-            const id = "loading-" + Date.now();
-            const div = document.createElement('div');
-            div.id = id;
-            div.className = "typing-indicator";
-            div.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
-            chatBox.appendChild(div);
-            chatBox.scrollTop = chatBox.scrollHeight;
-            return id;
-        }
-
-        function removeTypingIndicator(id) {
-            const element = document.getElementById(id);
-            if (element) element.remove();
+        function addMsg(cls, txt) {
+            const div = document.createElement("div");
+            div.className = "message " + cls;
+            div.innerHTML = txt;
+            document.getElementById("chatBox").appendChild(div);
+            document.getElementById("chatBox").scrollTop = 10000;
         }
     </script>
-
-
-</body></html>
+</body>
+</html>

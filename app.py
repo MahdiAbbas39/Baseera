@@ -27,6 +27,10 @@ app.add_middleware(
 async def get_logo():
     # هذا يخلي السيرفر يرجع ملف الصورة لما المتصفح يطلبه
     return FileResponse("baseera.png")
+@app.get("/baseera2.png")
+async def get_favicon():
+    return FileResponse("baseera2.png")
+
 
 # 1. الصفحة الرئيسية
 @app.get("/", response_class=HTMLResponse)
@@ -70,3 +74,4 @@ async def chat(req: ChatReq):
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
+

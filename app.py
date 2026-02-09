@@ -1,6 +1,6 @@
 import uvicorn
 from fastapi import FastAPI, UploadFile, File
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from pypdf import PdfReader
@@ -22,13 +22,19 @@ app.add_middleware(
     CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"],
 )
 
-# 1. الصفحة الرئيسية: تقرأ ملف index.html
+# --- 🟢 (جديد) مسار خاص لخدمة الصورة ---
+@app.get("/baseera.png")
+async def get_logo():
+    # هذا يخلي السيرفر يرجع ملف الصورة لما المتصفح يطلبه
+    return FileResponse("baseera.png")
+
+# 1. الصفحة الرئيسية
 @app.get("/", response_class=HTMLResponse)
 async def home():
     with open("index.html", "r", encoding="utf-8") as f:
         return f.read()
 
-# 2. رفع الملف: يستخرج النص ويرجعه للمتصفح
+# 2. رفع الملف
 @app.post("/upload")
 async def upload(file: UploadFile = File(...)):
     try:
@@ -39,12 +45,11 @@ async def upload(file: UploadFile = File(...)):
             extract = page.extract_text()
             if extract: text += extract + "\n"
         
-        # نرجع النص للمتصفح ليحفظه عنده (حل مشكلة Vercel)
         return {"text": text}
     except Exception as e:
         return {"error": str(e)}
 
-# 3. الشات: يستقبل السؤال + النص
+# 3. الشات
 class ChatReq(BaseModel):
     message: str
     context: str

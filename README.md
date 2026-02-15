@@ -1,4 +1,5 @@
 # Baseera | بصيرة
+<img width="1344" height="768" alt="bassera banar" src="https://github.com/user-attachments/assets/107a3ad1-b377-4ce7-9ed8-3de4642226d6" />
 
 # 🚀 AI Project Advisor | مستشار المشاريع الذكي
 
